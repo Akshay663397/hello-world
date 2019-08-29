@@ -1,0 +1,551 @@
+<project name="HERITAGE Application" basedir="." default="ftp">
+
+
+	<!-- project-specific variables -->
+	<property name="app.base" value="${basedir}" />
+	<property name="web-inf.folder" value="${app.base}/WebContent/WEB-INF" />
+	<property name="build.dir" value="${app.base}/build" />
+	<property name="build.classes.dir" value="${build.dir}/classes" />
+	<property name="war.folder" value="${build.dir}/war" />
+	<property name="src.dir" value="${app.base}/src" />
+	<property name="comp.name" value="Heritage" />
+	<property name="resources.dir" value="${app.base}/resources" />
+	<property name="binding.dir.src" value="${web-inf.folder}/config/ws" />
+	<property name="binding.dir.dest" value="${build.classes.dir}/config/ws" />
+	<property environment="env" />
+	<property file="${app.base}/../ProperyFiles/${env}.properties" />
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+
+
+	<!-- Specify the externalised properties -->
+	<property file="${app.base}/${propName}" />
+	<!-- <echo message="Command line args:=========== ${propName} =========== ${dbpw}" /> -->
+
+	<property name="war.name" value="${comp.name}.war" />
+	
+	
+	<path id="build.class.path">
+		<fileset dir="${web-inf.folder}/lib">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${build.dir}/supportlib">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<target name="clean">
+		<echo>=== Cleaning the old Files and Folders ===</echo>
+		<delete dir="${build.classes.dir}" />
+		<delete dir="${war.folder}" />
+		<delete file="${jboss.deploy.folder}/${war.name}"/>
+	</target>
+
+	<target name="Init" depends="clean">
+		<echo>=== Create the required Folders ===</echo>
+		<fail unless="comp.name">You must specify the comp.name property when you run ant.</fail>
+		<mkdir dir="${build.classes.dir}" />
+		<mkdir dir="${war.folder}" />
+	</target>
+
+
+	<!-- COMPILE -->
+	<target name="compile" depends="Init">
+		<echo>=== COMPILE the Source Files ===</echo>
+		<echo>Compiling ${src.dir} files ...</echo>
+		<javac debug="on" srcdir="${src.dir}" destdir="${build.classes.dir}" includes="**/*" includeantruntime="false" >
+			<classpath refid="build.class.path" />
+		</javac>
+		
+		<echo>=== Added By Akshay Pawar COMPILE the Source Files START ===</echo>
+		<copy todir="${build.classes.dir}/com/pnc/">
+        <fileset dir="${src.dir}/com/pnc/">
+             <include name="**/*.xml" />
+        </fileset>
+		</copy>
+		
+			<copy todir="${build.classes.dir}/com/pnc/public/">        
+		<fileset dir="${src.dir}/com/pnc/public/">
+              <include name="**/*.js" />
+        </fileset>
+		</copy>
+		
+		<copy todir="${build.classes.dir}/com/mm/common/AuthFormVO/">        
+		<fileset dir="${src.dir}/com/mm/common/AuthFormVO/">
+                <include name="**/*.xsd" />
+        </fileset>
+		</copy>
+		
+		<echo>=== Added By Akshay Pawar COMPILE the Source Files END ===</echo>
+		
+		<echo>=== START: COMPILE binding files===</echo>
+		<bind verbose="true" load="true">
+			<bindingfileset dir="${binding.dir.src}">
+				<include name="*.xml"/>
+				<include name="*.xsl"/>
+			</bindingfileset>
+			<classpath>
+				<fileset dir="${web-inf.folder}/lib" includes="jibx-bind.jar"/>
+				<pathelement path="${build.classes.dir}"/>
+			</classpath>
+		</bind>
+		<echo>=== END: COMPILE bind files ===</echo>
+		
+	</target>
+
+	<taskdef name="bind" classname="org.jibx.binding.ant.CompileTask">
+		<classpath>
+			<fileset dir="${web-inf.folder}/lib" includes="jibx-bind.jar"/>
+		</classpath>
+	</taskdef>
+
+
+
+	<!-- PACKAGE -->
+	<target name="package" depends="compile">
+		<echo>=== PACKAGE the WAR file ===</echo>
+		
+		<delete dir="${app.base}/WebContent/WEB-INF/classes" />
+		<mkdir dir="${app.base}/WebContent/WEB-INF/classes" />
+		<copy todir="${app.base}/WebContent/WEB-INF/classes">
+			<fileset dir="${src.dir}">
+				<include name="**/*.properties" />
+				<include name="com/mm/common/email/emailTemplates/*" />
+			</fileset>
+			<fileset dir="${build.classes.dir}">
+				<include name="**/*" />
+			</fileset>
+			<fileset dir="${app.base}/WebContent">
+				<include name="**/*.properties" />
+			</fileset>
+
+			<fileset dir="${resources.dir}">
+				<include name="**/*.properties" />
+				<include name="**/*.xml"/>
+				<include name="**/*.xsl"/>
+			</fileset>
+		</copy>
+		<!-- Started for Auto build -->
+		<!--<replace file="${prop.path}" value="${DATABASE_PWD}">
+			<replacefilter token="@@DBPW@@"/>
+		</replace>
+			<replace file="${app.prop.path}" value="${release_label}">
+					<replacefilter token="@@RELEASE_LABEL@@"/>
+		</replace>
+				<replace file="${app.prop.path}">
+			<replacefilter token="@@PATH@@" value="${log.path}"/>
+		    <replacefilter token="@@SSOURL@@" value="${sso.url}"/>
+			<replacefilter token="@@BIRTURL@@" value="${birt.url}"/>
+		</replace>
+		<replace file="${pas.log4j.path}">
+			<replacefilter token="@@LOGDIR@@" value="${log.path}"/>
+		</replace>
+		
+		<mkdir dir="${dest.path}"/>
+		
+		<unzip src="${jar.path}" dest="${dest.path}"/>
+				
+		<delete dir="${jar.path}"/>
+		
+		<replace file="${wsdl.path}" value="${cxf.url}">
+			<replacefilter token="@@CXFURL@@"/>
+		</replace>
+				
+		<zip destfile="${jar.path}" basedir="${dest.path}" />
+		
+		<delete dir="${dest.path}"/> -->
+		   <!-- End for Auto build -->
+		   <tstamp>
+			<format property="war.create.time" pattern="dd/MM/yyyy hh:mm:ss aa" />
+		</tstamp>
+		   <echo> Package Task Completed : ${war.create.time} </echo>
+	</target>
+	
+    <target name="createWar" depends="package">
+    	<!-- the ant war task. with all resources in place, create the war file -->
+    			<echo> Creating WAR file : ${war.folder}/${war.name} </echo>
+    			<tstamp>
+    				<format property="war.create.time" pattern="dd/MM/yyyy hh:mm:ss aa"/>
+    			</tstamp>
+    			<jar destfile="${war.folder}/${war.name}" basedir="${app.base}/WebContent">
+    				<manifest>
+    					<attribute name="Built-By" value="${user.name}" />
+    					<attribute name="Built-On" value="${war.create.time}" />
+    					<section name="RVOS">
+    						<attribute name="Implementation-Title" value="${implementation.title}" />
+    						<attribute name="Implementation-Version" value="${implementation.version}" />
+    						<attribute name="Implementation-Vendor" value="${implementation.vendor}" />
+    					</section>
+    				</manifest>
+    			</jar>
+    			<echo>=== War Name: ${war.name} ===</echo>
+    			<echo> ${war.name} is created on ${war.create.time} </echo>
+		
+	</target>
+	
+	<target name="ftp" description="upload war file to server" depends="createWar">
+		<echo>start ftp ...</echo>
+		<echo>start ftp ...${build-directory}</echo>
+		<echo>start ftp ...${war-file-name}</echo>
+		<echo>start ftp ...${HeritageWAR_ftp-userid}</echo>
+		<echo>start ftp ...${HeritageWAR_ftp-password}</echo>
+		<echo>start ftp ...${ftp-server}</echo>
+		<echo>start ftp ...${HeritageWAR_ftp-remotedir}</echo>
+
+		<scp file="${build-directory}/${war-file-name}" sftp="true" trust="true" todir="${HeritageWAR_ftp-userid}:${HeritageWAR_ftp-password}@${ftp-server}:${HeritageWAR_ftp-remotedir}" />
+
+	</target> 
+	
+	<!-- STOP HPCI RATING Port START -->
+                <target name="stopRating_HPCI" description="Stops HPCI Rating port" >
+                                <echo>+--stop Jboss HPCI Rating PORT:: ${HPCI_RATING}---------------------------+</echo>
+                                                                
+                                                               
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${HPCI_RATING};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| 	JBOSS HPCI RATING STOP  |</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+                
+    <!-- STOP HPCI RATING Port END -->
+				 
+	<!-- STOP NBIC RATING Port START -->
+                <target name="stopRating_NBIC" description="Stops NBIC Rating port" depends="stopRating_HPCI">
+                                <echo>+--stop Jboss NBIC Rating PORT:: ${NBIC_RATING}---------------------------+</echo>
+                                                                
+                                                               
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${NBIC_RATING};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| 	JBOSS NBIC RATING STOP  |</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+                
+    <!-- STOP NBIC RATING Port END -->
+				 				 			 
+	<!-- STOP Edit Service Port START -->
+                <target name="stopEdit" description="Stops Edit service port" depends="stopRating_NBIC">
+                                <echo>+--stop Jboss EDIT PORT:: ${EDIT_SERVICE}---------------------------+</echo>
+                                                                
+                                                               
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${EDIT_SERVICE};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| 	JBOSS EDIT SERVICE STOP |</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+                
+    <!-- STOP EDIT service Port END -->
+				 
+	<!-- STOP NBIC application Port START -->
+                <target name="stopJboss_NBIC" description="Stops NBIC Application port" depends="stopEdit">
+                                <echo>+--stop Jboss NBIC PORT:: ${NBIC_APPLICATION}---------------------------+</echo>
+                                                                <!--
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd /data/jboss/wildfly-10.1.0.Final_49090/bin;nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                -->
+                                
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${NBIC_APPLICATION};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| J B O S S  N B I C S T O P  |</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+
+    <!-- STOP NBIC application Port END -->
+				
+	<!-- STOP HPCI application Port START -->
+                <target name="stopJboss_HPCI" description="Stops HPCI Application port" depends="stopJboss_NBIC">
+                                <echo>+--stop Jboss HPCI PORT:: ${HPCI_APPLICATION}---------------------------+</echo>
+                                                                
+                                                               
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${HPCI_APPLICATION};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| J B O S S  H P C I S T O P  |</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+                
+    <!-- STOP HPCI application Port END -->
+	
+	<!-- STOP Billing Application Port START -->
+                <target name="stopBilling" description="Stops NBIC Application port" depends="stopJboss_HPCI">
+                                <echo>+--stop Jboss BILING_APPLICATION PORT:: ${BILING_APPLICATION}---------------------------+</echo>
+                                                                
+                                                               
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${BILING_APPLICATION};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| 	JBOSS BILLING APP  STOP |</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+                
+    <!-- STOP Billing Application Port END -->
+
+	<!-- STOP EBPP Application Port START -->
+                <target name="stopEBPP" description="Stops NBIC Application port" depends="stopBilling">
+                                <echo>+--stop Jboss EBBP_APPLICATION PORT:: ${EBBP_APPLICATION}---------------------------+</echo>
+                                                                
+                                                               
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${EBBP_APPLICATION};nohup sh stopJboss.sh &amp;" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                                
+                                <echo>+-----------------------------+</echo>
+                                <echo>| 	JBOSS EBPP APP  STOP	|</echo>
+                                <echo>+-----------------------------+</echo>                          
+                </target>
+                
+    <!-- STOP EBPP Application Port END -->
+	
+	<!-- DB START -->
+	<target name="db" > <!-- depends="icm_auto_publish" -->
+		<echo message="Building War and Database" />		
+		<loadfile property="fileRV" srcfile="${DBReleaseVersion}"/>
+		<for param="var" list="${fileRV}" delimiter="${line.separator}">
+			<sequential>
+				<echo>AKSHAY Deleting all files into Folder START </echo>				
+				<delete includeemptydirs="true">					
+					<fileset dir="${workspaceFolder}" defaultexcludes="false">
+						<include name="**/*"/>
+						<include name="**/*.svn"/>
+						<include name="**/SSO/*.svn"/>
+						<include name="**/Security/*.svn"/>
+						<exclude name="**/*.xml"/>
+						<exclude name="**/*.xml_org"/>
+						<exclude name="**/*.bat"/>
+						<exclude name="**/*.jar"/>
+						<exclude name="**/*.txt"/>
+						<exclude name="**/*.log"/>
+						<exclude name="**/*.properties"/>
+						<exclude name="**/BOPWS_CXF/**"/>
+						<exclude name="**/BID/**"/>
+						<exclude name="**/SSO/**"/>
+						<exclude name="**/Security/**"/>						
+						<exclude name="**/ICM_DEPLOYMENT/**"/>
+						<exclude name="**/Frontend/**"/>
+						<exclude name="**/BID_WS/**"/>
+						<exclude name="**/BIDCXFClient/**"/>
+						<exclude name="**/BIDOutputInvoker/**"/>
+						<exclude name="**/BillingWS/**"/>
+						<exclude name="**/BOP_MODEL_MERGED/**"/>
+						<exclude name="**/CBRouter/**"/>
+						<exclude name="**/DRL/**"/>
+						<exclude name="**/GLSTGRating/**"/>
+						<exclude name="**/InferenceEngine/**"/>
+						<exclude name="**/jbatch/**"/>
+						<exclude name="**/jbeam/**"/>
+						<exclude name="**/ScoringService/**"/>
+						<exclude name="**/STGBilling/**"/>
+						<exclude name="**/STGRating/**"/>
+						<exclude name="**/WCRating/**"/>
+						<!--<exclude name="**/ICM_Auto_Deployment/**"/>
+						<exclude name="**/ICM_TICKETS/**"/>-->
+					</fileset>
+				</delete>
+				<echo>AKSHAY Deleting all files into Folder END </echo>						
+				<echo>AKSHAY file :: @{var}</echo>				
+				<loadfile property="dbfile" srcfile="${DBInfo}"/>
+				<for param="dbvar" list="${dbfile}" delimiter="${line.separator}">
+				<sequential>
+					<echo>AKSHAY dbfile :: @{dbvar}</echo>
+					<echo>AKSHAY Full Path :: @{var}/@{dbvar}</echo>					
+					<exec executable="C:\Program Files\TortoiseSVN\bin\svn.exe">
+					   <arg value="checkout" />
+					   <arg value="@{var}/@{dbvar}" />
+					   <arg value="${workspaceFolder}" />
+		
+					</exec>
+					<echo>Checking SVN Folder</echo>
+					<delete includeemptydirs="true">
+						<fileset dir="${workspaceFolder}" defaultexcludes="false">
+							 <include name="**/*"/>
+							 <include name="**/.svn"/>
+							 <include name="**/*.svn"/>
+							 <include name="**/SSO/*.svn"/>
+							 <include name="**/Security/*.svn"/>
+							 <exclude name="**/*.sql"/>
+							 <exclude name="**/*.pks"/>
+							 <exclude name="**/*.pkb"/>
+							 <exclude name="**/*.fnc"/>
+							 <exclude name="**/*.prc"/>
+							 <exclude name="**/*.trg"/>
+							 <exclude name="**/*.types"/>
+							 <exclude name="**/*.typeb"/>
+							 <exclude name="**/*.xml"/>
+							 <exclude name="**/*.xml_org"/>
+							 <exclude name="**/*.bat"/>
+							 <exclude name="**/*.jar"/>
+							 <exclude name="**/*.txt"/>
+							 <exclude name="**/*.log"/>
+							 <exclude name="**/*.properties"/>
+							 <exclude name="**/BOPWS_CXF/**"/>
+							 <exclude name="**/BID/**"/>
+							 <exclude name="**/SSO/**"/>
+							 <exclude name="**/Security/**"/>						
+							 <exclude name="**/ICM_DEPLOYMENT/**"/>
+							 <exclude name="**/AntBuildSequence.xlsx"/>
+							 <exclude name="**/Frontend/**"/>
+							 <exclude name="**/BID_WS/**"/>
+							 <exclude name="**/BIDCXFClient/**"/>
+							 <exclude name="**/BIDOutputInvoker/**"/>
+							 <exclude name="**/BillingWS/**"/>
+							 <exclude name="**/BOP_MODEL_MERGED/**"/>
+							 <exclude name="**/CBRouter/**"/>
+							 <exclude name="**/DRL/**"/>
+							 <exclude name="**/GLSTGRating/**"/>
+							 <exclude name="**/InferenceEngine/**"/>
+							 <exclude name="**/jbatch/**"/>
+							 <exclude name="**/jbeam/**"/>
+							 <exclude name="**/ScoringService/**"/>
+							 <exclude name="**/STGBilling/**"/>
+							 <exclude name="**/STGRating/**"/>
+							 <exclude name="**/WCRating/**"/>
+						 </fileset>
+					</delete>					
+				</sequential>				
+				</for>
+				<echo>Connecting to ${DB_SID}</echo>
+				<!-- <sleep seconds="60"/> -->
+				<apply executable="sqlplus" dir="E:/jenkins/Backend" parallel="false"> 						
+						<arg line="${DB_username}/${DB_password}@${DB_SID}" /> 						
+						<arg value="@${workspaceFolder}\DB_RunScripts.sql" />
+						<srcfile/>
+						<fileset dir="${workspaceFolder}" casesensitive="no" description="take all sql files">
+							<patternset>
+								<include name="**/DB_RunScripts.sql" />
+							</patternset> 
+						</fileset>
+				</apply> 
+			</sequential>
+		</for>
+	</target>
+	
+	<target name="createDBFlag">
+		<echo>Inside createDBFlag</echo>
+		<condition property="checkDB">
+            <equals arg1="${isCreateDB}" arg2="Y" />
+        </condition>
+		<!--<antcall target="${createGQWar}" />-->
+	</target>
+	<target name="createDB" depends="createDBFlag" if="checkDB">
+        <echo>this target will be called only when property ${do.test} is set</echo>
+		<echo>Inside test</echo>
+		<antcall target="db" />
+    </target>
+   <!-- DB END -->
+   
+   <!-- Execute Compile All Script START -->
+                <target name="CompileAll" >
+				<echo>Connecting to ${DB_SID}</echo>
+                                <apply executable="sqlplus" dir="." parallel="false">
+                                                <arg line="${DB_username}/${DB_password}@${DB_SID}" />
+                                                <arg value="@${CompileScriptPath}\CompileScripts.sql" />
+                                                <srcfile/>
+                                                <!--<fileset dir="${workspaceFolder}" casesensitive="no" description="take all sql files">-->
+                                                <fileset dir="${CompileScriptPath}" casesensitive="no" description="take all sql files">
+                                                <patternset>
+                                                <include name="**/CompileScripts.sql" />
+                                                </patternset> 
+                                                </fileset>
+                                </apply>
+                </target>
+                
+                <target name="exeCompileScriptFlag">
+                                <echo>Inside exeCompileScriptFlag</echo>
+                                <condition property="checkCompile">
+            <equals arg1="${isCompile}" arg2="Y" />
+        </condition>                    
+                </target>
+                <target name="exeCompileScript" depends="exeCompileScriptFlag" if="checkCompile">        
+                                <echo>Inside exeCompileScript</echo>
+                                <antcall target="CompileAll" />
+    </target>
+   <!-- Execute Compile All Script END -->
+
+				
+				<!-- HERITAGE WAR BACKUP START-->
+                <target name="Backupwar"  description="Heritage War File backup">                     
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${NBIC_DEPLOY_DIRECTORY};cp ${war-file-name} ${BACKUP_DIRECTORY};" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+								<echo>+-----------------------------+</echo>
+                                <echo>|     WAR BACKUP COMPLETE     |</echo>
+                                <echo>+-----------------------------+</echo>    
+                </target>
+				
+				<!-- HERITAGE WAR BACKUP Stop -->
+				
+	<!-- Move Heritage war to 49090 Port START -->
+	
+                <target name="NBICportdeployment" depends='Backupwar' description="Move Heritage War File to NBIC Port">                     
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${HeritageWAR_ftp-remotedir};cp ${war-file-name} ${NBIC_DEPLOY_DIRECTORY};" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+                
+				
+								<echo>+--------------------------------------+</echo>
+                                <echo>|     HERITAGE WAR COPIED TO NBIC PORT |</echo>
+                                <echo>+--------------------------------------+</echo> 
+				</target>
+                          <!-- Move Heritage war to 49090 END -->
+				
+			<!-- Move Heritage war to 49191 Port START -->
+	
+                <target name="HPCIportdeployment" depends='NBICportdeployment' description="Move HERITAGE WAR TO HPCI Port">                     
+                                <sshexec host="${ftp-server}" username="${HeritageWAR_ftp-userid}" password="${HeritageWAR_ftp-password}"  port="22"
+        command="source ~/.bash_profile &amp;&amp;cd ${HeritageWAR_ftp-remotedir};cp ${war-file-name} ${HPCI_DEPLOY_DIRECTORY};" 
+        trust="true"
+        verbose="true"
+        failonerror="true"
+                                />
+								<echo>+--------------------------------------+</echo>
+                                <echo>|     HERITAGE WAR COPIED TO HPCI PORT |</echo>
+                                <echo>+--------------------------------------+</echo> 
+                </target>
+                       <!-- Move Heritage war to 49191 END -->
+			
+</project>
